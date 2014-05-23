@@ -6,7 +6,7 @@
  *
  */
 class BackgroundWorkerShell extends AppShell {
-	public $uses = array('Job');
+	public $uses = array('BackgroundJobs.Job');
 
 	public function getOptionParser() {
 		return parent::getOptionParser()
@@ -19,22 +19,25 @@ class BackgroundWorkerShell extends AppShell {
 	}
 
 	public function runQueued() {
-		$jobs = $this->Job->getQueuedJobs(1);
+		$job = $this->Job->reserve();
 
-		foreach ($jobs as $job) {
-			try {
-				$params = json_decode($job['Job']['args'], 1);
-
-				$Task = $this->Tasks->load($job['Job']['task']);
-				$Task->initialize();
-
-				call_user_func_array(array($Task, 'execute'), $params);
-			} catch (Exception $ex) {
-				CakeLog::write('job', "Job failed with exception: {$ex->getMessage()} - " . json_encode($job));
-			}
-
-			$this->Job->markAsFinished($job['Job']['id']);
+		if (empty($job)) {
+			// no queued jobs found
+			return;
 		}
+
+		try {
+			$params = json_decode($job['Job']['args'], 1);
+
+			$Task = $this->Tasks->load($job['Job']['task']);
+			$Task->initialize();
+
+			call_user_func_array(array($Task, 'execute'), $params);
+		} catch (Exception $ex) {
+			CakeLog::write('job', "Job failed with exception: {$ex->getMessage()} - " . json_encode($job['Job']));
+		}
+
+		$this->Job->markAsFinished($job['Job']['id']);
 	}
 
 	public function start() {
@@ -105,8 +108,8 @@ class BackgroundWorkerShell extends AppShell {
 
 		$workers = array();
 		foreach ($output as $line) {
-			$worker = explode(' ', $line);
-			$workers[] = $worker[0];
+			$worker = explode(' ', trim($line));
+			$workers[] = trim($worker[0]);
 		}
 
 		return $workers;

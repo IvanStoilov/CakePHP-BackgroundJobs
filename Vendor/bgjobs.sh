@@ -11,7 +11,6 @@ fi
 
 while [ 1 ]
 do
-	#./cake BackgroundJobs runQueued
-	echo $INTERVAL
+	./cake BackgroundJobs.BackgroundWorker runQueued
 	sleep $INTERVAL
 done
