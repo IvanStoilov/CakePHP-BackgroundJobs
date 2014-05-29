@@ -26,6 +26,12 @@ class BackgroundWorkerShell extends AppShell {
 			return;
 		}
 
+		$this->run($job);
+
+		$this->Job->markAsFinished($job['Job']['id']);
+	}
+
+	public function run($job) {
 		try {
 			$params = json_decode($job['Job']['args'], 1);
 
@@ -36,8 +42,12 @@ class BackgroundWorkerShell extends AppShell {
 		} catch (Exception $ex) {
 			CakeLog::write('job', "Job failed with exception: {$ex->getMessage()} - " . json_encode($job['Job']));
 		}
+	}
 
-		$this->Job->markAsFinished($job['Job']['id']);
+	public function rerun() {
+		$jobId = $this->args[0];
+		$job = $this->Job->findById($jobId);
+		$this->run($job);
 	}
 
 	public function start() {
