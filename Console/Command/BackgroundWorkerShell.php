@@ -119,7 +119,7 @@ class BackgroundWorkerShell extends AppShell {
 	}
 
 	private function _getWorkersPids() {
-		$cmd = "ps -o pid,comm,args | grep {$this->params['type']} | grep -v grep | grep -v cake.php";
+		$cmd = "ps x -o pid,comm,args | grep {$this->params['type']} | grep -v grep | grep -v cake.php";
 
 		exec($cmd, $output, $result);
 
